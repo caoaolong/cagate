@@ -1,3 +1,1 @@
-{
-    "user": "root"
-}
+{"password":"calong","port":3306,"database":"cagate","host":"172.17.0.3","user":"root"}

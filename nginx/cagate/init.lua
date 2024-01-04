@@ -1,17 +1,17 @@
-local cjson = require("cjson")
-local config, err = io.open(ngx.config.prefix() .. "cagate/cagate.json", "r")
+local config_path = ngx.config.prefix() .. "cagate/cagate.json"
+-- 保存数据
+local dict = ngx.shared.cagate
+dict:set("config", config_path)
+-- 读取配置
+local config, err = io.open(config_path, "r")
 if config then
-    local content = config:read("*a")
-    local data = cjson.decode(content)
-    if data then
-        ngx.log(ngx.INFO, data["user"])
+    local dbConfig = config:read("a")
+    if dbConfig then
+        dict:set("dbConfig", dbConfig)
     end
     io.close()
 else
     ngx.log(ngx.ERR, err)
 end
-
-local dict = ngx.shared.cagate
-dict:set("name", "Cagate Service")
 
 ngx.log(ngx.INFO, "Openresty Initilized!")
