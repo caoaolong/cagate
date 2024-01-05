@@ -23,15 +23,21 @@ settings_api.set_settings = function ()
     local dict = ngx.shared.cagate
     dict:set("dbConfig", configValue)
     -- 写入文件
-    local dict = ngx.shared.cagate
-    local config, err = io.open(dict:get("config"), "w")
-    if config then
-        config:write(cjson.encode(configValue))
-        config:close()
-        cagate.resp(cagate.status.ok, "write database settings successed!")
+    local config = nil
+    config, err = io.open(dict:get("config"), "w")
+    if not config then
+        cagate.resp_servererror(err)
         return
     end
-    cagate.resp_servererror(err)
+    config:write(cjson.encode(configValue))
+    config:close()
+    -- 装载配置
+    err = cagate.load_config()
+    if err then
+        cagate.resp_servererror(err)
+        return
+    end
+    cagate.resp(cagate.status.ok, "write database settings successed!")
 end
 
 -- [router] POST /cagate/get/settings
@@ -47,6 +53,15 @@ settings_api.get_settings = function ()
         return
     end
     cagate.resp_servererror(err)
+end
+
+settings_api.cache_settings = function ()
+    local dict = ngx.shared.cagate
+    local json = require("cjson")
+    cagate.resp(cagate.status.ok, "load cache settings successed!", {
+        db = json.decode(dict:get("dbConfig")),
+        sys = json.decode(dict:get("sysConfig"))
+    })
 end
 
 local api = settings_api[ngx.var.api]
