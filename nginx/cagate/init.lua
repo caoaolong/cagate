@@ -5,9 +5,12 @@ dict:set("config", config_path)
 -- 读取数据库配置
 local config, err = io.open(config_path, "r")
 if config then
-    local dbConfig = config:read("a")
-    if dbConfig then
-        dict:set("dbConfig", dbConfig)
+    local configValue = config:read("a")
+    if configValue then
+        local cjson = require("cjson")
+        local value = cjson.decode(configValue)
+        dict:set("dbConfig", cjson.encode(value["db"]))
+        dict:set("redisConfig", cjson.encode(value["redis"]))
     end
     io.close()
 else

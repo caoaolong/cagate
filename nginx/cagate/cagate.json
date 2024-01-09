@@ -1,1 +1,1 @@
-{"host":"172.17.0.3","port":3306,"database":"cagate","user":"root","password":"calong"}
+{"redis":{"port":6379,"host":"172.17.0.4"},"db":{"database":"cagate","port":3306,"password":"calong","user":"root","host":"172.17.0.3"}}

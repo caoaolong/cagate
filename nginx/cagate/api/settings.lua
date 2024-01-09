@@ -12,16 +12,22 @@ settings_api.set_settings = function ()
     if configValue.host == "localhost" then
         configValue.host = "127.0.0.1"
     end
-    -- 测试连接是否可用
-    local cagate = require("resty.cagate")
-    local err = cagate.test_conn(configValue)
+    -- 测试database连接是否可用
+    local err = cagate.test_conn(configValue["db"], "mysql")
+    if err then
+        cagate.resp_servererror(err)
+        return
+    end
+    -- 测试redis连接是否可用
+    err = cagate.test_conn(configValue["redis"], "redis")
     if err then
         cagate.resp_servererror(err)
         return
     end
     -- 更新缓存
     local dict = ngx.shared.cagate
-    dict:set("dbConfig", configValue)
+    dict:set("dbConfig", configValue["db"])
+    dict:set("redisConfig", configValue["redis"])
     -- 写入文件
     local config = nil
     config, err = io.open(dict:get("config"), "w")
@@ -40,27 +46,13 @@ settings_api.set_settings = function ()
     cagate.resp(cagate.status.ok, "write database settings successed!")
 end
 
--- [router] POST /cagate/get/settings
-settings_api.get_settings = function ()
-    local dict = ngx.shared.cagate
-    local config, err = io.open(dict:get("config"), "r")
-    if config then
-        local configValue = config:read("a")
-        config:close()
-        local cjson = require("cjson")
-        cagate.resp(cagate.status.ok, "read database settings successed!",
-            cjson.decode(configValue))
-        return
-    end
-    cagate.resp_servererror(err)
-end
-
 settings_api.cache_settings = function ()
     local dict = ngx.shared.cagate
-    local json = require("cjson")
+    local cjson = require("cjson")
     cagate.resp(cagate.status.ok, "load cache settings successed!", {
-        db = json.decode(dict:get("dbConfig")),
-        sys = json.decode(dict:get("sysConfig"))
+        db = cjson.decode(dict:get("dbConfig")),
+        redis = cjson.decode(dict:get("redisConfig")),
+        sys = cjson.decode(dict:get("sysConfig"))
     })
 end
 
